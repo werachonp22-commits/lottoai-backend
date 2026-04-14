@@ -69,10 +69,10 @@ async def fetch_from_sanook(client: httpx.AsyncClient) -> dict | None:
         if not front3 or not back3:
             all_text = soup.get_text(separator=" ", strip=True)
             if not front3:
-                f_match = re.search(r"3 ตัวหน้า.*?(\d{3}).*?(\d{3})", all_text)
+                f_match = re.search(r"(?:หน้า|เลขหน้า 3 ตัว|3 ตัวหน้า).*?(?<!\d)(\d{3})(?!\d).*?(?<!\d)(\d{3})(?!\d)", all_text)
                 if f_match: front3 = [f_match.group(1), f_match.group(2)]
             if not back3:
-                b_match = re.search(r"3 ตัวหลัง.*?(\d{3}).*?(\d{3})", all_text)
+                b_match = re.search(r"(?:หลัง|เลขท้าย 3 ตัว|3 ตัวหลัง).*?(?<!\d)(\d{3})(?!\d).*?(?<!\d)(\d{3})(?!\d)", all_text)
                 if b_match: back3 = [b_match.group(1), b_match.group(2)]
 
         if prize1:
@@ -102,13 +102,13 @@ async def fetch_from_kapook(client: httpx.AsyncClient) -> dict | None:
         all_numbers = re.findall(r"\b\d{6}\b", r.text)
         all_2d      = re.findall(r"\b\d{2}\b", r.text)
 
-        # หา 3 ตัวหน้า / 3 ตัวหลัง จาก text โดยอิง Keyword
+        # หา 3 ตัวหน้า / 3 ตัวหลัง จาก text โดยอิง Keyword (Strict 3 digits isolated)
         all_text = soup.get_text(separator=" ", strip=True)
         front3 = []
         back3 = []
-        f_match = re.search(r"(?:หน้า|เลขหน้า 3 ตัว|3 ตัวหน้า).*?(\d{3}).*?(\d{3})", all_text)
+        f_match = re.search(r"(?:หน้า|เลขหน้า 3 ตัว|3 ตัวหน้า).*?(?<!\d)(\d{3})(?!\d).*?(?<!\d)(\d{3})(?!\d)", all_text)
         if f_match: front3 = [f_match.group(1), f_match.group(2)]
-        b_match = re.search(r"(?:หลัง|เลขท้าย 3 ตัว|3 ตัวหลัง).*?(\d{3}).*?(\d{3})", all_text)
+        b_match = re.search(r"(?:หลัง|เลขท้าย 3 ตัว|3 ตัวหลัง).*?(?<!\d)(\d{3})(?!\d).*?(?<!\d)(\d{3})(?!\d)", all_text)
         if b_match: back3 = [b_match.group(1), b_match.group(2)]
 
         if all_numbers:
