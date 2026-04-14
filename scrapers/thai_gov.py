@@ -67,7 +67,7 @@ async def fetch_from_sanook(client: httpx.AsyncClient) -> dict | None:
 
         # Fallback regex ถ้าหาไม่เจอ
         if not front3 or not back3:
-            all_text = soup.get_text(separator=" ", strip=True)
+            all_text = soup.get_text(separator=" ", strip=True).replace(",", "")
             if not front3:
                 f_match = re.search(r"(?:หน้า|เลขหน้า 3 ตัว|3 ตัวหน้า).*?(?<!\d)(\d{3})(?!\d).*?(?<!\d)(\d{3})(?!\d)", all_text)
                 if f_match: front3 = [f_match.group(1), f_match.group(2)]
@@ -103,7 +103,7 @@ async def fetch_from_kapook(client: httpx.AsyncClient) -> dict | None:
         all_2d      = re.findall(r"\b\d{2}\b", r.text)
 
         # หา 3 ตัวหน้า / 3 ตัวหลัง จาก text โดยอิง Keyword (Strict 3 digits isolated)
-        all_text = soup.get_text(separator=" ", strip=True)
+        all_text = soup.get_text(separator=" ", strip=True).replace(",", "")
         front3 = []
         back3 = []
         f_match = re.search(r"(?:หน้า|เลขหน้า 3 ตัว|3 ตัวหน้า).*?(?<!\d)(\d{3})(?!\d).*?(?<!\d)(\d{3})(?!\d)", all_text)

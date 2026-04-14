@@ -53,7 +53,7 @@ app.add_middleware(
 
 # ── Cache helpers ─────────────────────────────────────────────────────────────
 def cache_path(key: str) -> Path:
-    return CACHE_DIR / f"{key}_v2.json"
+    return CACHE_DIR / f"{key}_v3.json"
 
 
 def read_cache(key: str, ttl_minutes: int) -> dict | None:
