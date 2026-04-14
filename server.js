@@ -46,9 +46,45 @@ async function fetchThaiGov() {
       if (match) last2 = match[0];
     }
 
+    // 3 Front
+    const front3 = [];
+    $('.lotto-prize-front3 span.number, .lottery-result__front3 span.number, strong.number').each((i, el) => {
+      const parentClass = $(el).parent().attr('class') || '';
+      if (parentClass.includes('front3') || $(el).closest('.lotto-prize-front3').length) {
+        const text = $(el).text().trim();
+        const match = text.match(/\d{3}/);
+        if (match) front3.push(match[0]);
+      }
+    });
+
+    // 3 Back
+    const back3 = [];
+    $('.lotto-prize-back3 span.number, .lottery-result__back3 span.number, strong.number').each((i, el) => {
+      const parentClass = $(el).parent().attr('class') || '';
+      if (parentClass.includes('back3') || $(el).closest('.lotto-prize-back3').length) {
+        const text = $(el).text().trim();
+        const match = text.match(/\d{3}/);
+        if (match) back3.push(match[0]);
+      }
+    });
+
     // Date
     const dateEl = $('.lotto-date, .lottery-result__date, time').first().text().trim();
     if (dateEl) dateStr = dateEl;
+
+    // Fallback regex scan if Cheerio specific selectors missed
+    if (front3.length === 0 || back3.length === 0) {
+      const allText = $('body').text().replace(/\s+/g, ' ');
+      // Try to find the list of 3 digit numbers near keywords
+      const frontMatch = allText.match(/3 ตัวหน้า.*?(\d{3}).*?(\d{3})/);
+      if (frontMatch) {
+         if (front3.length === 0) { front3.push(frontMatch[1], frontMatch[2]); }
+      }
+      const backMatch = allText.match(/3 ตัวหลัง.*?(\d{3}).*?(\d{3})/);
+      if (backMatch) {
+         if (back3.length === 0) { back3.push(backMatch[1], backMatch[2]); }
+      }
+    }
 
     if (prize1) {
       return {
@@ -56,8 +92,8 @@ async function fetchThaiGov() {
         available: true,
         prize1,
         last2: last2 || '—',
-        front3: [],
-        back3: [],
+        front3: front3.length ? front3 : ['???', '???'],
+        back3: back3.length ? back3 : ['???', '???'],
         date: dateStr,
         fetched_at: new Date().toISOString()
       };
