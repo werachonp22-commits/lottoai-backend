@@ -53,6 +53,28 @@ async def fetch_from_sanook(client: httpx.AsyncClient) -> dict | None:
         date_el = soup.select_one(".lotto-date, .lottery-result__date, time")
         date_str = date_el.get_text(strip=True) if date_el else ""
 
+        # 3 ตัวหน้า / 3 ตัวหลัง
+        front3 = []
+        back3 = []
+        try:
+            # ของ sanook ส่วนใหญ่จะอยู่ใน tag ที่มี class นี้
+            front_els = soup.select(".lotto-prize-front3 span.number, .lottery-result__front3 span.number")
+            back_els = soup.select(".lotto-prize-back3 span.number, .lottery-result__back3 span.number")
+            front3 = [re.findall(r"\d{3}", el.get_text())[0] for el in front_els if re.findall(r"\d{3}", el.get_text())][:2]
+            back3 = [re.findall(r"\d{3}", el.get_text())[0] for el in back_els if re.findall(r"\d{3}", el.get_text())][:2]
+        except Exception:
+            pass
+
+        # Fallback regex ถ้าหาไม่เจอ
+        if not front3 or not back3:
+            all_text = soup.get_text(separator=" ", strip=True)
+            if not front3:
+                f_match = re.search(r"3 ตัวหน้า.*?(\d{3}).*?(\d{3})", all_text)
+                if f_match: front3 = [f_match.group(1), f_match.group(2)]
+            if not back3:
+                b_match = re.search(r"3 ตัวหลัง.*?(\d{3}).*?(\d{3})", all_text)
+                if b_match: back3 = [b_match.group(1), b_match.group(2)]
+
         if prize1:
             logger.info("sanook: prize1=%s, last2=%s", prize1, last2)
             return {
@@ -60,8 +82,8 @@ async def fetch_from_sanook(client: httpx.AsyncClient) -> dict | None:
                 "prize1": prize1,
                 "last2": last2 or "—",
                 "date": _parse_date(date_str),
-                "front3": [],
-                "back3": [],
+                "front3": front3 if front3 else ["???", "???"],
+                "back3": back3 if back3 else ["???", "???"],
             }
     except Exception as e:
         logger.warning("sanook scrape failed: %s", e)
@@ -80,6 +102,15 @@ async def fetch_from_kapook(client: httpx.AsyncClient) -> dict | None:
         all_numbers = re.findall(r"\b\d{6}\b", r.text)
         all_2d      = re.findall(r"\b\d{2}\b", r.text)
 
+        # หา 3 ตัวหน้า / 3 ตัวหลัง จาก text โดยอิง Keyword
+        all_text = soup.get_text(separator=" ", strip=True)
+        front3 = []
+        back3 = []
+        f_match = re.search(r"(?:หน้า|เลขหน้า 3 ตัว|3 ตัวหน้า).*?(\d{3}).*?(\d{3})", all_text)
+        if f_match: front3 = [f_match.group(1), f_match.group(2)]
+        b_match = re.search(r"(?:หลัง|เลขท้าย 3 ตัว|3 ตัวหลัง).*?(\d{3}).*?(\d{3})", all_text)
+        if b_match: back3 = [b_match.group(1), b_match.group(2)]
+
         if all_numbers:
             prize1 = all_numbers[0]
             last2  = all_2d[0] if all_2d else "—"
@@ -89,8 +120,8 @@ async def fetch_from_kapook(client: httpx.AsyncClient) -> dict | None:
                 "prize1": prize1,
                 "last2": last2,
                 "date": _today_th(),
-                "front3": [],
-                "back3": [],
+                "front3": front3 if front3 else ["???", "???"],
+                "back3": back3 if back3 else ["???", "???"],
             }
     except Exception as e:
         logger.warning("kapook scrape failed: %s", e)
